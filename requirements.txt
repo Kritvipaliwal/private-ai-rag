@@ -6,4 +6,5 @@ faiss-cpu
 transformers
 sentence-transformers
 pypdf
-torch==2.1.2+cpu
+torch==2.0.1
+
