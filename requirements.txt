@@ -1,10 +1,9 @@
 streamlit
 langchain-community
+langchain-core
 langchain-text-splitters
 faiss-cpu
 transformers
 sentence-transformers
 pypdf
-torch
-SpeechRecognition
-pyaudio
+torch==2.1.2+cpu

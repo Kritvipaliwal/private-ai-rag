@@ -2,68 +2,54 @@ import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from transformers import pipeline
-import speech_recognition as sr
+from pypdf import PdfReader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import os
 
-st.set_page_config(page_title="My Private AI", layout="centered")
-st.title("🚀 My Private ChatGPT (RAG)")
+st.set_page_config(page_title="Private AI RAG", layout="centered")
+st.title("🔐 My Private ChatGPT (RAG)")
 
-# Chat memory
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = ""
+# Load embedding model once
+@st.cache_resource
+def load_embeddings():
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-# Load fast LLM only once
+# Load QA model once
 @st.cache_resource
 def load_qa():
-    return pipeline("text2text-generation", model="google/flan-t5-small")
+    return pipeline("text2text-generation", model="google/flan-t5-small", device=-1)
 
-qa = load_qa()
+embeddings = load_embeddings()
+qa_model = load_qa()
 
-# Upload multiple PDFs
-pdfs = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
+# Upload PDF
+pdf = st.file_uploader("Upload your PDF", type="pdf")
 
-if pdfs:
-    paths = []
-    for i, pdf in enumerate(pdfs):
-        path = f"doc_{i}.pdf"
-        with open(path, "wb") as f:
-            f.write(pdf.read())
-        paths.append(path)
+if pdf:
+    with open("doc.pdf", "wb") as f:
+        f.write(pdf.read())
 
-    if "db_built" not in st.session_state:
-        from rag import build_vector_db
-        build_vector_db(paths)
-        st.session_state.db_built = True
-        st.success("Documents Indexed Successfully")
+    reader = PdfReader("doc.pdf")
+    raw_text = ""
 
-# Voice input
+    for page in reader.pages:
+        raw_text += page.extract_text()
+
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    chunks = splitter.split_text(raw_text)
+
+    vector_db = FAISS.from_texts(chunks, embeddings)
+    vector_db.save_local("vector_db")
+
+    st.success("PDF Indexed Successfully!")
+
+# Ask question
 question = st.text_input("Ask your question")
 
-if st.button("🎤 Speak"):
-    r = sr.Recognizer()
-    with sr.Microphone() as src:
-        audio = r.listen(src)
-        question = r.recognize_google(audio)
-        st.write("You:", question)
-
 if question:
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = FAISS.load_local("vector_db", embeddings, allow_dangerous_deserialization=True)
+    docs = db.similarity_search(question, k=3)
+    context = "\n".join([d.page_content for d in docs])
 
-    docs = db.similarity_search(question, k=1)
-    context = docs[0].page_content
-
-    prompt = f"""
-Chat History:
-{st.session_state.chat_history}
-
-Document:
-{context}
-
-Question: {question}
-Answer:
-"""
-
-    result = qa(prompt, max_new_tokens=200, do_sample=False)[0]["generated_text"]
-    st.session_state.chat_history += f"\nUser: {question}\nAI: {result}"
-    st.success(result)
+    answer = qa_model(context, max_length=256)[0]["generated_text"]
+    st.success(answer)
