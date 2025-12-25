@@ -1,4 +1,45 @@
-venv/
-vector_db/
+# Python basics
 __pycache__/
-doc_*.pdf
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+venv/
+.env/
+.venv/
+ENV/
+env/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Byte-compiled / cache
+*.so
+*.egg
+pip-log.txt
+
+# Secrets / env
+.env
+*.env
+
+# Large binary patterns (add specifics you committed)
+*.exe
+*.dll
+*.pkl
+*.npy
+*.zip
+*.tar
+*.gz
+*.bin
+
