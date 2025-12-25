@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import FakeEmbeddings
+from langchain_community.embeddings.fake import FakeEmbeddings
 from transformers import pipeline
 
 st.title("My Private ChatGPT (RAG)")
@@ -14,7 +14,7 @@ if pdf:
     build_vector_db("doc.pdf")
     st.success("PDF Indexed")
 
-question = st.text_input("Ask question")
+question = st.text_input("Ask your question")
 
 if question:
     embeddings = FakeEmbeddings(size=384)
@@ -23,6 +23,6 @@ if question:
 
     context = "\n".join(d.page_content for d in docs)
     qa = pipeline("text2text-generation", model="google/flan-t5-small")
-
     answer = qa(context, max_length=256)[0]["generated_text"]
     st.success(answer)
+
