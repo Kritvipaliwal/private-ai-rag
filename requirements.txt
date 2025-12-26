@@ -3,8 +3,5 @@ chromadb
 langchain-community
 langchain-core
 langchain-text-splitters
-transformers
 pypdf
-numpy
-
-
+google-generativeai

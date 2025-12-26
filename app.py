@@ -1,14 +1,16 @@
 import streamlit as st
+import google.generativeai as genai
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.fake import FakeEmbeddings
-from transformers import pipeline
+
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 st.title("My Private ChatGPT (RAG)")
 
 pdf = st.file_uploader("Upload PDF", type="pdf")
 
 if pdf:
-    with open("doc.pdf", "wb") as f:
+    with open("doc.pdf","wb") as f:
         f.write(pdf.read())
     from rag import build_vector_db
     build_vector_db("doc.pdf")
@@ -22,6 +24,9 @@ if question:
     docs = db.similarity_search(question, k=3)
 
     context = "\n".join(d.page_content for d in docs)
-    qa = pipeline("text2text-generation", model="google/flan-t5-small")
-    answer = qa(context, max_length=256)[0]["generated_text"]
-    st.success(answer)
+
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(context + "\n\nQuestion: " + question)
+
+    st.success(response.text)
+
