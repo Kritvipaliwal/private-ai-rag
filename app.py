@@ -25,4 +25,3 @@ if question:
     qa = pipeline("text2text-generation", model="google/flan-t5-small")
     answer = qa(context, max_length=256)[0]["generated_text"]
     st.success(answer)
-

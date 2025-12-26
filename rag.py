@@ -13,3 +13,4 @@ def build_vector_db(path):
     embeddings = FakeEmbeddings(size=384)
     db = Chroma.from_documents(chunks, embeddings, persist_directory="vector_db")
     db.persist()
+
